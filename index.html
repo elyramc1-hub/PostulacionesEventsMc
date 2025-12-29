@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Staff - Full Data</title>
+    <title>Panel Staff - Reclutamiento</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #5865F2; --success: #2ecc71; --danger: #ed4245; --warning: #f1c40f; --bg: #1e1f22; --card: #2b2d31; --text: #ffffff; }
@@ -17,6 +17,8 @@
         button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
         .btn-send { background: var(--success); width: 100%; margin-top: 20px; color: #000; }
         .btn-admin-gate { background: transparent; color: #555; border: 1px dashed #555; margin: 40px auto; display: block; font-size: 0.7rem; }
+        
+        /* Estilos Tabla Admin */
         .table-wrapper { overflow-x: auto; margin-top: 20px; background: #18191c; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1300px; }
         th { background: var(--primary); padding: 10px; color: white; white-space: nowrap; }
@@ -52,25 +54,25 @@
             <select id="v"><option value="Java">Java</option><option value="Bedrock">Bedrock</option><option value="Ambas">Ambas</option></select>
 
             <label>Experiencia previa:</label>
-            <textarea id="exp" rows="2"></textarea>
+            <textarea id="exp" rows="2" placeholder="Cuéntanos dónde has trabajado antes..."></textarea>
 
             <label>Tiempo diario disponible:</label>
-            <input type="text" id="time">
+            <input type="text" id="time" placeholder="Ej: 3 horas">
 
             <label>Comandos conocidos:</label>
-            <input type="text" id="cmd">
+            <input type="text" id="cmd" placeholder="Ej: /tp, /ban, /worldedit">
 
             <label>Edad:</label>
             <input type="number" id="age">
 
-            <button class="btn-send" onclick="sendData()">Enviar Postulación</button>
+            <button class="btn-send" onclick="sendData()">Enviar mi Postulación</button>
         </div>
         <button class="btn-admin-gate" onclick="showLogin()">Modo Administrador 🔒</button>
     </div>
 
     <div id="view-login" class="hidden">
         <div class="card" style="max-width: 300px; margin: auto; text-align: center;">
-            <label>Contraseña:</label>
+            <label>Contraseña Admin:</label>
             <input type="password" id="pass">
             <button class="btn-send" onclick="checkLogin()">Entrar</button>
         </div>
@@ -79,16 +81,17 @@
     <div id="view-admin" class="hidden">
         <h1>PANEL DE GESTIÓN COMPLETO</h1>
         <div class="card">
-            <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Refrescar Datos</button>
-            <div class="table-wrapper" id="admin-content">Cargando datos...</div>
-            <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white;">Cerrar Panel</button>
+            <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Refrescar Lista</button>
+            <div class="table-wrapper" id="admin-content">Cargando base de datos...</div>
+            <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white;">Cerrar Sesión</button>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiKkK4NvjfIRVghw6dYgt9WubJjOG_c8iT223_0qfblDTeyc5xRPbhzKxP_YqXerdcdA/exec";
-    const CLAVE_CIFRADA = "YWRtaW4yNzI3";
+    // URL DE TU APP WEB ACTUALIZADA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCTvDJs2z6ZZKbrzUS_B0KivQURdfxx0WEM4-v_eZdUy0l0coqAQwgqQsOYVNUv4E/exec";
+    const CLAVE_CIFRADA = "YWRtaW4yNzI3"; // admin2727
 
     function updateDynamicQ() {
         const role = document.getElementById('role').value;
@@ -96,21 +99,27 @@
         let q2 = "";
         
         if(role === "DIRECTOR CREATIVO") {
-            q2 = "¿Qué eventos organizarías?";
+            q2 = "¿Qué ideas de eventos tienes para el servidor?";
         } else if(role === "ADMIN") {
-            q2 = "¿Sabes gestionar permisos?";
+            q2 = "¿Sabes gestionar permisos y plugins?";
         } else if(role === "BUILDER") {
-            q2 = "¿Sabes usar WorldEdit?";
+            q2 = "¿Sabes usar WorldEdit o herramientas de construcción?";
         } else {
-            q2 = "¿Sabes moderar el chat?";
+            q2 = "¿Sabes moderar el chat y aplicar sanciones?";
         }
         
-        dyn.innerHTML = `<label>2. ${q2}</label><input type="text" id="q2"><label>3. ¿Por qué deberíamos elegirte?</label><input type="text" id="q3">`;
+        dyn.innerHTML = `
+            <label>2. ${q2}</label><input type="text" id="q2">
+            <label>3. ¿Por qué deberíamos elegirte a ti?</label><input type="text" id="q3">
+        `;
     }
 
     async function sendData() {
         const discord = document.getElementById('discord_name').value;
-        if(!discord) return alert("Escribe tu Discord");
+        if(!discord) return alert("Por favor, pon tu nombre de Discord");
+
+        const btn = document.querySelector('.btn-send');
+        btn.innerText = "ENVIANDO..."; btn.disabled = true;
 
         const params = new URLSearchParams({
             action: "create",
@@ -126,9 +135,14 @@
             photo: "N/A"
         });
 
-        await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-        alert("✅ Enviado");
-        location.reload();
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
+            alert("✅ Postulación enviada con éxito.");
+            location.reload();
+        } catch(e) {
+            alert("Error al enviar. Inténtalo de nuevo.");
+            btn.disabled = false; btn.innerText = "Enviar mi Postulación";
+        }
     }
 
     function checkLogin() {
@@ -136,20 +150,21 @@
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-admin').classList.remove('hidden');
             loadAdminData();
-        } else { alert("Error"); }
+        } else { alert("Contraseña incorrecta."); }
     }
 
     async function loadAdminData() {
         const container = document.getElementById('admin-content');
-        container.innerHTML = "Actualizando tabla...";
+        container.innerHTML = "Obteniendo todas las postulaciones...";
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
             
-            let html = "<table><tr><th>Acciones</th><th>Discord</th><th>Rango</th><th>Versión</th><th>P2</th><th>P3</th><th>Experiencia</th><th>Tiempo</th><th>Comandos</th><th>Edad</th><th>Estado</th></tr>";
+            // Tabla con TODAS las columnas
+            let html = "<table><tr><th>Acciones</th><th>Discord</th><th>Rango</th><th>Versión</th><th>Pregunta 2</th><th>Pregunta 3</th><th>Experiencia</th><th>Tiempo</th><th>Comandos</th><th>Edad</th><th>Estado</th></tr>";
 
             for(let i=1; i < data.length; i++) {
-                const disc = data[i][1];
+                const disc = data[i][1] || "N/A";
                 html += `<tr>
                     <td class="actions">
                         <button class="btn-act" style="background:var(--success)" onclick="updateStatus(${i}, 'Aceptado')">✔</button>
@@ -169,18 +184,18 @@
                 </tr>`;
             }
             container.innerHTML = html + "</table>";
-        } catch(e) { container.innerHTML = "Error al leer datos del Sheet."; }
+        } catch(e) { container.innerHTML = "Error al cargar los datos. Asegúrate de haber publicado el script como Aplicación Web."; }
     }
 
     async function updateStatus(row, status) {
         await fetch(SCRIPT_URL, { method: 'POST', body: new URLSearchParams({action: "updateStatus", row: row, status: status}), mode: 'no-cors' });
-        loadAdminData();
+        setTimeout(loadAdminData, 500);
     }
 
     async function deleteRow(row) {
-        if(!confirm("¿Borrar definitivamente?")) return;
+        if(!confirm("¿Deseas borrar esta postulación permanentemente?")) return;
         await fetch(SCRIPT_URL, { method: 'POST', body: new URLSearchParams({action: "delete", row: row}), mode: 'no-cors' });
-        loadAdminData();
+        setTimeout(loadAdminData, 500);
     }
 
     function showLogin() { document.getElementById('view-user').classList.add('hidden'); document.getElementById('view-login').classList.remove('hidden'); }
