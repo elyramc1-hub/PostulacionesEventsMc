@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reclutamiento Staff - Minecraft</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #5865F2; --success: #2ecc71; --danger: #ed4245; --warning: #f1c40f;
+            --bg: #1e1f22; --card: #2b2d31; --text: #ffffff;
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1100px; }
+        .hidden { display: none !important; }
+        h1 { font-family: 'Press Start 2P', cursive; color: var(--success); font-size: 1rem; text-align: center; margin-bottom: 30px; text-shadow: 2px 2px #000; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; border-top: 5px solid var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.8rem; color: #b5bac1; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1e1f22; color: white; box-sizing: border-box; font-family: inherit; }
+        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        .btn-send { background: var(--success); width: 100%; margin-top: 20px; color: #000; }
+        .btn-send:hover { transform: scale(1.02); background: #27ae60; }
+        .btn-admin-gate { background: transparent; color: #555; border: 1px dashed #555; margin: 40px auto; display: block; font-size: 0.7rem; }
+        
+        /* Estilos Tabla Admin */
+        .table-wrapper { overflow-x: auto; margin-top: 20px; background: #18191c; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 800px; }
+        th { background: var(--primary); padding: 12px; color: white; }
+        td { border-bottom: 1px solid #333; padding: 12px; text-align: center; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; color: #000; display: inline-block; }
+        .Pendiente { background: var(--warning); }
+        .Aceptado { background: var(--success); }
+        .Rechazado { background: var(--danger); color: white; }
+        .actions { display: flex; gap: 8px; justify-content: center; }
+        .btn-act { padding: 8px; font-size: 14px; display: flex; align-items: center; justify-content: center; min-width: 35px; }
+        .btn-acc { background: var(--success); color: #000; }
+        .btn-rej { background: var(--warning); color: #000; }
+        .btn-del { background: var(--danger); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="view-user">
+        <h1>[ RECLUTAMIENTO STAFF ]</h1>
+        <div class="card">
+            <label>Rango al que postulas:</label>
+            <select id="role" onchange="updateDynamicQuestions()">
+                <option value="ADMIN">ADMINISTRADOR</option>
+                <option value="CREATIVO">DIRECTOR CREATIVO</option>
+                <option value="STAFF">STAFF / MODERADOR</option>
+                <option value="BUILDER">BUILDER (CONSTRUCTOR)</option>
+            </select>
+
+            <label>1. ¿Qué versión de Minecraft tienes?</label>
+            <select id="v"><option value="Java">Java</option><option value="Bedrock">Bedrock</option><option value="Ambas">Ambas</option></select>
+            
+            <div id="dynamic-questions"></div>
+
+            <label>4. ¿Has sido parte de algún equipo de moderación? (Dime cuál):</label>
+            <textarea id="exp" rows="2" placeholder="Ej: Hypixel - Mod (2 meses)"></textarea>
+
+            <label>5. ¿Cuánto tiempo le dedicarías al server?</label>
+            <input type="text" id="time" placeholder="Ej: 3 horas diarias">
+
+            <label>6. ¿Sabes de comandos de Minecraft?</label>
+            <input type="text" id="cmd" placeholder="Ej: /tp, /setblock, /whitelist">
+
+            <label>7. ¿Qué edad tienes?</label>
+            <input type="number" id="age">
+
+            <div id="builder-only" class="hidden">
+                <label>8. Adjunta foto de alguna construcción (Link):</label>
+                <input type="text" id="photo" placeholder="Sube tu imagen a Imgur o Discord y pega el link">
+            </div>
+
+            <button class="btn-send" onclick="sendData()">Enviar mi Postulación</button>
+        </div>
+        <button class="btn-admin-gate" onclick="showLogin()">Modo Administrador 🔒</button>
+    </div>
+
+    <div id="view-login" class="hidden">
+        <h1>ACCESO RESTRINGIDO</h1>
+        <div class="card" style="max-width: 300px; margin: auto; text-align: center;">
+            <label>Contraseña:</label>
+            <input type="password" id="pass" placeholder="••••••••">
+            <button class="btn-send" onclick="checkLogin()">Ingresar</button>
+            <button onclick="location.reload()" style="background:none; color: #555; margin-top:10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="view-admin" class="hidden">
+        <h1>PANEL DE GESTIÓN</h1>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Actualizar Lista</button>
+                <span>Clave: <b>admin2727</b></span>
+            </div>
+            <div class="table-wrapper" id="admin-content">Obteniendo datos...</div>
+            <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white; width:auto;">Cerrar Sesión</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0lbu9kbGj5ilFj45XeROqeChkPaLUyH6wc3BS9MklhNzngKiAaVFDZ1VTN6mA-DXc/exec";
+    const PASS = "admin2727";
+
+    function updateDynamicQuestions() {
+        const role = document.getElementById('role').value;
+        const dyn = document.getElementById('dynamic-questions');
+        document.getElementById('builder-only').classList.toggle('hidden', role !== 'BUILDER');
+        
+        let q2 = "", q3 = "";
+        if(role === 'ADMIN') {
+            q2 = "¿Sabes cómo modificar roles en discord?";
+            q3 = "¿Sabes cómo banear usuarios de discord?";
+        } else if(role === 'CREATIVO') {
+            q2 = "¿Sabes organizar canales y eventos?";
+            q3 = "¿Tienes ideas para nuevas dinámicas?";
+        } else if(role === 'BUILDER') {
+            q2 = "¿Sabes usar WorldEdit o VoxelSniper?";
+            q3 = "¿Cuánto tardas en hacer un spawn?";
+        } else {
+            q2 = "¿Sabes borrar mensajes y mutear?";
+            q3 = "¿Qué harías ante un insulto en el chat?";
+        }
+
+        dyn.innerHTML = `
+            <label>2. ${q2}</label><input type="text" id="q2">
+            <label>3. ${q3}</label><input type="text" id="q3">
+        `;
+    }
+
+    async function sendData() {
+        const btn = document.querySelector('.btn-send');
+        btn.innerText = "ENVIANDO..."; btn.disabled = true;
+
+        const params = new URLSearchParams({
+            action: "create", role: document.getElementById('role').value,
+            v: document.getElementById('v').value, q2: document.getElementById('q2').value,
+            q3: document.getElementById('q3').value, exp: document.getElementById('exp').value,
+            time: document.getElementById('time').value, cmd: document.getElementById('cmd').value,
+            age: document.getElementById('age').value, photo: document.getElementById('photo')?.value || "Sin foto"
+        });
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
+            alert("✅ ¡Postulación enviada correctamente!");
+            location.reload();
+        } catch(e) {
+            alert("Error al conectar. Verifica tu internet.");
+            btn.disabled = false; btn.innerText = "Enviar mi Postulación";
+        }
+    }
+
+    function showLogin() { 
+        document.getElementById('view-user').classList.add('hidden'); 
+        document.getElementById('view-login').classList.remove('hidden'); 
+    }
+
+    function checkLogin() {
+        if(document.getElementById('pass').value === PASS) {
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-admin').classList.remove('hidden');
+            loadAdminData();
+        } else { alert("Acceso Denegado"); }
+    }
+
+    async function loadAdminData() {
+        const container = document.getElementById('admin-content');
+        container.innerHTML = "Cargando solicitudes...";
+        try {
+            const res = await fetch(SCRIPT_URL);
+            const data = await res.json();
+            let html = "<table><tr><th>Acciones</th>";
+            data[0].forEach(h => html += `<th>${h}</th>`);
+            html += "</tr>";
+
+            for(let i=1; i < data.length; i++) {
+                html += `<tr><td class="actions">
+                    <button class="btn-act btn-acc" onclick="updateStatus(${i}, 'Aceptado')" title="Aceptar">✔</button>
+                    <button class="btn-act btn-rej" onclick="updateStatus(${i}, 'Rechazado')" title="Rechazar">✖</button>
+                    <button class="btn-act btn-del" onclick="deleteRow(${i})" title="Borrar">🗑</button>
+                </td>`;
+                data[i].forEach((cell, idx) => {
+                    if(idx === 10) html += `<td><span class="status-badge ${cell}">${cell}</span></td>`;
+                    else if(idx === 9 && cell.startsWith('http')) html += `<td><a href="${cell}" target="_blank" style="color:var(--success)">Link</a></td>`;
+                    else html += `<td>${cell}</td>`;
+                });
+                html += "</tr>";
+            }
+            container.innerHTML = html + "</table>";
+        } catch(e) { container.innerHTML = "Error al leer la base de datos."; }
+    }
+
+    async function updateStatus(row, status) {
+        if(!confirm(`¿Deseas marcar como ${status}?`)) return;
+        const p = new URLSearchParams({action: "updateStatus", row: row, status: status});
+        await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
+        setTimeout(loadAdminData, 500);
+    }
+
+    async function deleteRow(row) {
+        if(!confirm("¿Deseas BORRAR esta solicitud permanentemente?")) return;
+        const p = new URLSearchParams({action: "delete", row: row});
+        await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
+        setTimeout(loadAdminData, 500);
+    }
+
+    updateDynamicQuestions();
+</script>
+</body>
+</html>
