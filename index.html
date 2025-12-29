@@ -19,12 +19,11 @@
         input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #444; background: #1e1f22; color: white; box-sizing: border-box; font-family: inherit; }
         button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
         .btn-send { background: var(--success); width: 100%; margin-top: 20px; color: #000; }
-        .btn-send:hover { transform: scale(1.02); background: #27ae60; }
+        .btn-send:hover { transform: scale(1.01); background: #27ae60; }
         .btn-admin-gate { background: transparent; color: #555; border: 1px dashed #555; margin: 40px auto; display: block; font-size: 0.7rem; }
         
-        /* Estilos Tabla Admin */
         .table-wrapper { overflow-x: auto; margin-top: 20px; background: #18191c; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 800px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 1000px; }
         th { background: var(--primary); padding: 12px; color: white; }
         td { border-bottom: 1px solid #333; padding: 12px; text-align: center; }
         .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; color: #000; display: inline-block; }
@@ -58,20 +57,20 @@
             <div id="dynamic-questions"></div>
 
             <label>4. ¿Has sido parte de algún equipo de moderación? (Dime cuál):</label>
-            <textarea id="exp" rows="2" placeholder="Ej: Hypixel - Mod (2 meses)"></textarea>
+            <textarea id="exp" rows="2" placeholder="Ej: MiServer - Admin (3 meses)"></textarea>
 
             <label>5. ¿Cuánto tiempo le dedicarías al server?</label>
-            <input type="text" id="time" placeholder="Ej: 3 horas diarias">
+            <input type="text" id="time" placeholder="Ej: 2 horas por la tarde">
 
             <label>6. ¿Sabes de comandos de Minecraft?</label>
-            <input type="text" id="cmd" placeholder="Ej: /tp, /setblock, /whitelist">
+            <input type="text" id="cmd" placeholder="Ej: /tp, /gamemode, /whitelist">
 
             <label>7. ¿Qué edad tienes?</label>
             <input type="number" id="age">
 
             <div id="builder-only" class="hidden">
                 <label>8. Adjunta foto de alguna construcción (Link):</label>
-                <input type="text" id="photo" placeholder="Sube tu imagen a Imgur o Discord y pega el link">
+                <input type="text" id="photo" placeholder="Pega el link de la imagen aquí">
             </div>
 
             <button class="btn-send" onclick="sendData()">Enviar mi Postulación</button>
@@ -80,23 +79,22 @@
     </div>
 
     <div id="view-login" class="hidden">
-        <h1>ACCESO RESTRINGIDO</h1>
+        <h1>ACCESO ADMIN</h1>
         <div class="card" style="max-width: 300px; margin: auto; text-align: center;">
-            <label>Contraseña:</label>
+            <label>Contraseña de Seguridad:</label>
             <input type="password" id="pass" placeholder="••••••••">
-            <button class="btn-send" onclick="checkLogin()">Ingresar</button>
-            <button onclick="location.reload()" style="background:none; color: #555; margin-top:10px;">Cancelar</button>
+            <button class="btn-send" onclick="checkLogin()">Entrar al Panel</button>
+            <button onclick="location.reload()" style="background:none; color: #555; margin-top:10px;">Volver</button>
         </div>
     </div>
 
     <div id="view-admin" class="hidden">
-        <h1>PANEL DE GESTIÓN</h1>
+        <h1>SOLICITUDES RECIBIDAS</h1>
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Actualizar Lista</button>
-                <span>Clave: <b>admin2727</b></span>
+            <div style="margin-bottom: 15px;">
+                <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Actualizar Datos</button>
             </div>
-            <div class="table-wrapper" id="admin-content">Obteniendo datos...</div>
+            <div class="table-wrapper" id="admin-content">Cargando base de datos...</div>
             <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white; width:auto;">Cerrar Sesión</button>
         </div>
     </div>
@@ -104,7 +102,9 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0lbu9kbGj5ilFj45XeROqeChkPaLUyH6wc3BS9MklhNzngKiAaVFDZ1VTN6mA-DXc/exec";
-    const PASS = "admin2727";
+    
+    // Contraseña cifrada (admin2727)
+    const CLAVE_OCULTA = "YWRtaW4yNzI3";
 
     function updateDynamicQuestions() {
         const role = document.getElementById('role').value;
@@ -117,13 +117,13 @@
             q3 = "¿Sabes cómo banear usuarios de discord?";
         } else if(role === 'CREATIVO') {
             q2 = "¿Sabes organizar canales y eventos?";
-            q3 = "¿Tienes ideas para nuevas dinámicas?";
+            q3 = "¿Qué nuevas ideas de eventos tienes?";
         } else if(role === 'BUILDER') {
             q2 = "¿Sabes usar WorldEdit o VoxelSniper?";
-            q3 = "¿Cuánto tardas en hacer un spawn?";
+            q3 = "¿Puedes construir un mapa en menos de 2 días?";
         } else {
             q2 = "¿Sabes borrar mensajes y mutear?";
-            q3 = "¿Qué harías ante un insulto en el chat?";
+            q3 = "¿Cómo manejas a un usuario tóxico?";
         }
 
         dyn.innerHTML = `
@@ -134,22 +134,27 @@
 
     async function sendData() {
         const btn = document.querySelector('.btn-send');
-        btn.innerText = "ENVIANDO..."; btn.disabled = true;
+        btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
         const params = new URLSearchParams({
-            action: "create", role: document.getElementById('role').value,
-            v: document.getElementById('v').value, q2: document.getElementById('q2').value,
-            q3: document.getElementById('q3').value, exp: document.getElementById('exp').value,
-            time: document.getElementById('time').value, cmd: document.getElementById('cmd').value,
-            age: document.getElementById('age').value, photo: document.getElementById('photo')?.value || "Sin foto"
+            action: "create", 
+            role: document.getElementById('role').value,
+            v: document.getElementById('v').value, 
+            q2: document.getElementById('q2').value,
+            q3: document.getElementById('q3').value, 
+            exp: document.getElementById('exp').value,
+            time: document.getElementById('time').value, 
+            cmd: document.getElementById('cmd').value,
+            age: document.getElementById('age').value, 
+            photo: document.getElementById('photo')?.value || "Sin imagen"
         });
 
         try {
             await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-            alert("✅ ¡Postulación enviada correctamente!");
+            alert("✅ ¡Postulación enviada! Pronto te avisaremos.");
             location.reload();
         } catch(e) {
-            alert("Error al conectar. Verifica tu internet.");
+            alert("Error de conexión.");
             btn.disabled = false; btn.innerText = "Enviar mi Postulación";
         }
     }
@@ -160,16 +165,18 @@
     }
 
     function checkLogin() {
-        if(document.getElementById('pass').value === PASS) {
+        const passInput = document.getElementById('pass').value;
+        // Comparamos usando codificación btoa para ocultar la clave plana
+        if(btoa(passInput) === CLAVE_OCULTA) {
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-admin').classList.remove('hidden');
             loadAdminData();
-        } else { alert("Acceso Denegado"); }
+        } else { alert("Contraseña Incorrecta"); }
     }
 
     async function loadAdminData() {
         const container = document.getElementById('admin-content');
-        container.innerHTML = "Cargando solicitudes...";
+        container.innerHTML = "Leyendo solicitudes...";
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
@@ -179,33 +186,35 @@
 
             for(let i=1; i < data.length; i++) {
                 html += `<tr><td class="actions">
-                    <button class="btn-act btn-acc" onclick="updateStatus(${i}, 'Aceptado')" title="Aceptar">✔</button>
-                    <button class="btn-act btn-rej" onclick="updateStatus(${i}, 'Rechazado')" title="Rechazar">✖</button>
-                    <button class="btn-act btn-del" onclick="deleteRow(${i})" title="Borrar">🗑</button>
+                    <button class="btn-act btn-acc" onclick="updateStatus(${i}, 'Aceptado')">✔</button>
+                    <button class="btn-act btn-rej" onclick="updateStatus(${i}, 'Rechazado')">✖</button>
+                    <button class="btn-act btn-del" onclick="deleteRow(${i})">🗑</button>
                 </td>`;
                 data[i].forEach((cell, idx) => {
                     if(idx === 10) html += `<td><span class="status-badge ${cell}">${cell}</span></td>`;
-                    else if(idx === 9 && cell.startsWith('http')) html += `<td><a href="${cell}" target="_blank" style="color:var(--success)">Link</a></td>`;
+                    else if(idx === 9 && cell.startsWith('http')) html += `<td><a href="${cell}" target="_blank" style="color:var(--success)">Imagen</a></td>`;
                     else html += `<td>${cell}</td>`;
                 });
                 html += "</tr>";
             }
             container.innerHTML = html + "</table>";
-        } catch(e) { container.innerHTML = "Error al leer la base de datos."; }
+        } catch(e) { container.innerHTML = "Error al cargar la base de datos."; }
     }
 
     async function updateStatus(row, status) {
-        if(!confirm(`¿Deseas marcar como ${status}?`)) return;
+        if(!confirm(`¿Marcar fila ${row} como ${status}?`)) return;
         const p = new URLSearchParams({action: "updateStatus", row: row, status: status});
         await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
-        setTimeout(loadAdminData, 500);
+        alert("Estado actualizado.");
+        setTimeout(loadAdminData, 600);
     }
 
     async function deleteRow(row) {
-        if(!confirm("¿Deseas BORRAR esta solicitud permanentemente?")) return;
+        if(!confirm("¿Deseas BORRAR esta postulación para siempre?")) return;
         const p = new URLSearchParams({action: "delete", row: row});
         await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
-        setTimeout(loadAdminData, 500);
+        alert("Fila eliminada.");
+        setTimeout(loadAdminData, 600);
     }
 
     updateDynamicQuestions();
