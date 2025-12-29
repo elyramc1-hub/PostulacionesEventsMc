@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Reclutamiento Staff</title>
+    <title>Panel Staff - Full Data</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #5865F2; --success: #2ecc71; --danger: #ed4245; --warning: #f1c40f; --bg: #1e1f22; --card: #2b2d31; --text: #ffffff; }
         body { background-color: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1200px; }
+        .container { width: 100%; max-width: 1400px; }
         .hidden { display: none !important; }
         h1 { font-family: 'Press Start 2P', cursive; color: var(--success); font-size: 1rem; text-align: center; margin-bottom: 30px; }
         .card { background: var(--card); padding: 25px; border-radius: 12px; border-top: 5px solid var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
@@ -18,29 +18,30 @@
         .btn-send { background: var(--success); width: 100%; margin-top: 20px; color: #000; }
         .btn-admin-gate { background: transparent; color: #555; border: 1px dashed #555; margin: 40px auto; display: block; font-size: 0.7rem; }
         .table-wrapper { overflow-x: auto; margin-top: 20px; background: #18191c; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 1100px; }
-        th { background: var(--primary); padding: 12px; color: white; }
-        td { border-bottom: 1px solid #333; padding: 12px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.7rem; min-width: 1300px; }
+        th { background: var(--primary); padding: 10px; color: white; white-space: nowrap; }
+        td { border-bottom: 1px solid #333; padding: 10px; text-align: center; vertical-align: middle; }
         .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; color: #000; display: inline-block; }
         .Pendiente { background: var(--warning); }
         .Aceptado { background: var(--success); }
         .Rechazado { background: var(--danger); color: white; }
         .actions { display: flex; gap: 5px; justify-content: center; }
-        .btn-act { padding: 5px 10px; font-size: 12px; }
+        .discord-name { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="view-user">
-        <h1>[ RECLUTAMIENTO ]</h1>
+        <h1>[ RECLUTAMIENTO STAFF ]</h1>
         <div class="card">
-            <label>Nombre de Discord (ej: usuario#0000):</label>
-            <input type="text" id="discord_name" placeholder="Tu nombre y tag" required>
+            <label>Nombre de Discord:</label>
+            <input type="text" id="discord_name" placeholder="usuario#0000" required>
 
             <label>Rango:</label>
             <select id="role" onchange="updateDynamicQ()">
                 <option value="ADMIN">ADMINISTRADOR</option>
+                <option value="DIRECTOR CREATIVO">DIRECTOR CREATIVO</option>
                 <option value="STAFF">STAFF / MODERADOR</option>
                 <option value="BUILDER">BUILDER</option>
             </select>
@@ -64,7 +65,7 @@
 
             <button class="btn-send" onclick="sendData()">Enviar Postulación</button>
         </div>
-        <button class="btn-admin-gate" onclick="showLogin()">Acceso Administrador 🔒</button>
+        <button class="btn-admin-gate" onclick="showLogin()">Modo Administrador 🔒</button>
     </div>
 
     <div id="view-login" class="hidden">
@@ -76,29 +77,40 @@
     </div>
 
     <div id="view-admin" class="hidden">
-        <h1>PANEL ADMIN</h1>
+        <h1>PANEL DE GESTIÓN COMPLETO</h1>
         <div class="card">
-            <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Refrescar Lista</button>
-            <div class="table-wrapper" id="admin-content">Cargando...</div>
-            <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white;">Cerrar Sesión</button>
+            <button onclick="loadAdminData()" style="background:var(--primary); color:white;">🔄 Refrescar Datos</button>
+            <div class="table-wrapper" id="admin-content">Cargando datos...</div>
+            <button onclick="location.reload()" style="background:#444; margin-top:20px; color:white;">Cerrar Panel</button>
         </div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiKkK4NvjfIRVghw6dYgt9WubJjOG_c8iT223_0qfblDTeyc5xRPbhzKxP_YqXerdcdA/exec";
-    const CLAVE_CIFRADA = "YWRtaW4yNzI3"; // admin2727
+    const CLAVE_CIFRADA = "YWRtaW4yNzI3";
 
     function updateDynamicQ() {
         const role = document.getElementById('role').value;
         const dyn = document.getElementById('dynamic-questions');
-        let q2 = role === 'ADMIN' ? "¿Sabes gestionar roles?" : role === 'BUILDER' ? "¿Usas WorldEdit?" : "¿Sabes moderar el chat?";
-        dyn.innerHTML = `<label>2. ${q2}</label><input type="text" id="q2"><label>3. ¿Por qué quieres entrar?</label><input type="text" id="q3">`;
+        let q2 = "";
+        
+        if(role === "DIRECTOR CREATIVO") {
+            q2 = "¿Qué eventos organizarías?";
+        } else if(role === "ADMIN") {
+            q2 = "¿Sabes gestionar permisos?";
+        } else if(role === "BUILDER") {
+            q2 = "¿Sabes usar WorldEdit?";
+        } else {
+            q2 = "¿Sabes moderar el chat?";
+        }
+        
+        dyn.innerHTML = `<label>2. ${q2}</label><input type="text" id="q2"><label>3. ¿Por qué deberíamos elegirte?</label><input type="text" id="q3">`;
     }
 
     async function sendData() {
         const discord = document.getElementById('discord_name').value;
-        if(!discord) return alert("Escribe tu nombre de Discord");
+        if(!discord) return alert("Escribe tu Discord");
 
         const params = new URLSearchParams({
             action: "create",
@@ -115,7 +127,7 @@
         });
 
         await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-        alert("✅ Enviado con éxito");
+        alert("✅ Enviado");
         location.reload();
     }
 
@@ -124,31 +136,40 @@
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-admin').classList.remove('hidden');
             loadAdminData();
-        } else { alert("Clave incorrecta"); }
+        } else { alert("Error"); }
     }
 
     async function loadAdminData() {
         const container = document.getElementById('admin-content');
-        container.innerHTML = "Obteniendo solicitudes...";
+        container.innerHTML = "Actualizando tabla...";
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            let html = "<table><tr><th>Acciones</th><th>Discord</th><th>Rango</th><th>Pregunta 2</th><th>Estado</th></tr>";
+            
+            let html = "<table><tr><th>Acciones</th><th>Discord</th><th>Rango</th><th>Versión</th><th>P2</th><th>P3</th><th>Experiencia</th><th>Tiempo</th><th>Comandos</th><th>Edad</th><th>Estado</th></tr>";
 
             for(let i=1; i < data.length; i++) {
-                const userDiscord = data[i][1];
-                html += `<tr><td class="actions">
-                    <button class="btn-act" style="background:var(--success)" onclick="updateStatus(${i}, 'Aceptado')">✔</button>
-                    <button class="btn-act" style="background:var(--warning)" onclick="updateStatus(${i}, 'Rechazado')">✖</button>
-                    <button class="btn-act" style="background:var(--danger); color:white" onclick="deleteRow(${i})">🗑</button>
-                </td>
-                <td style="color:var(--primary); font-weight:bold;">${userDiscord}</td>
-                <td>${data[i][2]}</td>
-                <td><b>[${userDiscord}]</b> ${data[i][4]}</td>
-                <td><span class="status-badge ${data[i][11]}">${data[i][11]}</span></td></tr>`;
+                const disc = data[i][1];
+                html += `<tr>
+                    <td class="actions">
+                        <button class="btn-act" style="background:var(--success)" onclick="updateStatus(${i}, 'Aceptado')">✔</button>
+                        <button class="btn-act" style="background:var(--warning)" onclick="updateStatus(${i}, 'Rechazado')">✖</button>
+                        <button class="btn-act" style="background:var(--danger); color:white" onclick="deleteRow(${i})">🗑</button>
+                    </td>
+                    <td class="discord-name">${disc}</td>
+                    <td>${data[i][2]}</td>
+                    <td>${data[i][3]}</td>
+                    <td><b>[${disc}]</b> ${data[i][4]}</td>
+                    <td>${data[i][5]}</td>
+                    <td>${data[i][6]}</td>
+                    <td>${data[i][7]}</td>
+                    <td>${data[i][8]}</td>
+                    <td>${data[i][9]}</td>
+                    <td><span class="status-badge ${data[i][11]}">${data[i][11]}</span></td>
+                </tr>`;
             }
             container.innerHTML = html + "</table>";
-        } catch(e) { container.innerHTML = "Error al conectar con Google Sheets."; }
+        } catch(e) { container.innerHTML = "Error al leer datos del Sheet."; }
     }
 
     async function updateStatus(row, status) {
