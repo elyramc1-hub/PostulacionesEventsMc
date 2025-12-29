@@ -43,6 +43,9 @@
     <div id="view-user">
         <h1>[ RECLUTAMIENTO STAFF ]</h1>
         <div class="card">
+            <label>Nombre de Discord (Ej: usuario#0000):</label>
+            <input type="text" id="discord_name" placeholder="Tu nombre y tag de Discord" required>
+
             <label>Rango al que postulas:</label>
             <select id="role" onchange="updateDynamicQuestions()">
                 <option value="ADMIN">ADMINISTRADOR</option>
@@ -102,8 +105,6 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0lbu9kbGj5ilFj45XeROqeChkPaLUyH6wc3BS9MklhNzngKiAaVFDZ1VTN6mA-DXc/exec";
-    
-    // Contraseña cifrada (admin2727)
     const CLAVE_OCULTA = "YWRtaW4yNzI3";
 
     function updateDynamicQuestions() {
@@ -133,11 +134,17 @@
     }
 
     async function sendData() {
+        if(!document.getElementById('discord_name').value) {
+            alert("Por favor, pon tu nombre de Discord");
+            return;
+        }
+
         const btn = document.querySelector('.btn-send');
         btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
         const params = new URLSearchParams({
             action: "create", 
+            discord: document.getElementById('discord_name').value, // Nuevo campo
             role: document.getElementById('role').value,
             v: document.getElementById('v').value, 
             q2: document.getElementById('q2').value,
@@ -151,7 +158,7 @@
 
         try {
             await fetch(SCRIPT_URL, { method: 'POST', body: params, mode: 'no-cors' });
-            alert("✅ ¡Postulación enviada! Pronto te avisaremos.");
+            alert("✅ ¡Postulación enviada!");
             location.reload();
         } catch(e) {
             alert("Error de conexión.");
@@ -159,14 +166,8 @@
         }
     }
 
-    function showLogin() { 
-        document.getElementById('view-user').classList.add('hidden'); 
-        document.getElementById('view-login').classList.remove('hidden'); 
-    }
-
     function checkLogin() {
         const passInput = document.getElementById('pass').value;
-        // Comparamos usando codificación btoa para ocultar la clave plana
         if(btoa(passInput) === CLAVE_OCULTA) {
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-admin').classList.remove('hidden');
@@ -180,40 +181,61 @@
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
-            let html = "<table><tr><th>Acciones</th>";
-            data[0].forEach(h => html += `<th>${h}</th>`);
-            html += "</tr>";
+            
+            // Creamos la tabla. El nombre de Discord aparecerá en la columna de la Pregunta 2.
+            let html = "<table><tr><th>Acciones</th><th>Discord</th><th>Rango</th><th>Versión</th><th>Respuesta P2</th><th>Respuesta P3</th><th>Exp</th><th>Tiempo</th><th>Comandos</th><th>Edad</th><th>Foto</th><th>Estado</th></tr>";
 
             for(let i=1; i < data.length; i++) {
+                // data[i][1] es el Discord Name
+                // data[i][3] es la respuesta a la Pregunta 2
                 html += `<tr><td class="actions">
                     <button class="btn-act btn-acc" onclick="updateStatus(${i}, 'Aceptado')">✔</button>
                     <button class="btn-act btn-rej" onclick="updateStatus(${i}, 'Rechazado')">✖</button>
                     <button class="btn-act btn-del" onclick="deleteRow(${i})">🗑</button>
                 </td>`;
-                data[i].forEach((cell, idx) => {
-                    if(idx === 10) html += `<td><span class="status-badge ${cell}">${cell}</span></td>`;
-                    else if(idx === 9 && cell.startsWith('http')) html += `<td><a href="${cell}" target="_blank" style="color:var(--success)">Imagen</a></td>`;
-                    else html += `<td>${cell}</td>`;
-                });
+                
+                // Mostramos el nombre de discord en lugar de la fecha o como primera columna real
+                html += `<td><b>${data[i][1]}</b></td>`; 
+                html += `<td>${data[i][2]}</td>`;
+                html += `<td>${data[i][3]}</td>`;
+                // En la columna de Pregunta 2 (índice 4 del sheet) ponemos: Nombre de Discord + Su respuesta
+                html += `<td>[${data[i][1]}] ${data[i][4]}</td>`; 
+                html += `<td>${data[i][5]}</td>`;
+                html += `<td>${data[i][6]}</td>`;
+                html += `<td>${data[i][7]}</td>`;
+                html += `<td>${data[i][8]}</td>`;
+                html += `<td>${data[i][9]}</td>`;
+                
+                // Foto
+                let photo = data[i][10];
+                if(photo && photo.startsWith('http')) html += `<td><a href="${photo}" target="_blank" style="color:var(--success)">Link</a></td>`;
+                else html += `<td>${photo}</td>`;
+                
+                // Estado
+                let status = data[i][11];
+                html += `<td><span class="status-badge ${status}">${status}</span></td>`;
+                
                 html += "</tr>";
             }
             container.innerHTML = html + "</table>";
-        } catch(e) { container.innerHTML = "Error al cargar la base de datos."; }
+        } catch(e) { container.innerHTML = "Error al cargar los datos."; }
+    }
+
+    function showLogin() { 
+        document.getElementById('view-user').classList.add('hidden'); 
+        document.getElementById('view-login').classList.remove('hidden'); 
     }
 
     async function updateStatus(row, status) {
-        if(!confirm(`¿Marcar fila ${row} como ${status}?`)) return;
         const p = new URLSearchParams({action: "updateStatus", row: row, status: status});
         await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
-        alert("Estado actualizado.");
         setTimeout(loadAdminData, 600);
     }
 
     async function deleteRow(row) {
-        if(!confirm("¿Deseas BORRAR esta postulación para siempre?")) return;
+        if(!confirm("¿Borrar?")) return;
         const p = new URLSearchParams({action: "delete", row: row});
         await fetch(SCRIPT_URL, {method: 'POST', body: p, mode: 'no-cors'});
-        alert("Fila eliminada.");
         setTimeout(loadAdminData, 600);
     }
 
